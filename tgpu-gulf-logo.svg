@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 250" role="img" aria-labelledby="title desc">
+  <title id="title">TGPU Gulf</title>
+  <desc id="desc">Official TGPU Gulf logo connecting Malaysia and the GCC.</desc>
+  <rect width="720" height="250" rx="30" fill="#fffdf8"/>
+  <g transform="translate(36 34)">
+    <path d="M92 6 142 58 126 72 92 38 58 72 42 58Z" fill="#c59b4f"/>
+    <path d="M24 92c25-10 50-9 75 2v58c-24-10-49-10-75-2Z" fill="none" stroke="#123b2c" stroke-width="11" stroke-linejoin="round"/>
+    <path d="M160 92c-25-10-50-9-75 2v58c24-10 49-10 75-2Z" fill="none" stroke="#123b2c" stroke-width="11" stroke-linejoin="round"/>
+    <path d="M92 94v61" stroke="#c59b4f" stroke-width="7" stroke-linecap="round"/>
+    <path d="M167 54c18 10 24 33 14 51" fill="none" stroke="#0b6b68" stroke-width="7" stroke-linecap="round"/>
+    <path d="M171 55c11-14 26-18 39-15-7 9-17 15-29 18 11-1 20 3 28 11-12 6-24 6-35 0" fill="none" stroke="#0b6b68" stroke-width="6" stroke-linecap="round"/>
+  </g>
+  <text x="255" y="94" font-family="Arial, Helvetica, sans-serif" font-size="72" font-weight="800" fill="#123b2c">TGPU</text>
+  <text x="433" y="94" font-family="Georgia, serif" font-size="72" font-weight="700" fill="#c59b4f">Gulf</text>
+  <text x="258" y="136" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700" letter-spacing="5" fill="#5d6a63">MALAYSIA ↔ GCC</text>
+  <line x1="258" y1="158" x2="638" y2="158" stroke="#c59b4f" stroke-width="3"/>
+  <text x="258" y="196" font-family="Arial, Helvetica, sans-serif" font-size="21" font-weight="600" letter-spacing="2" fill="#123b2c">PEOPLE · OPPORTUNITIES · COLLABORATION</text>
+</svg>
