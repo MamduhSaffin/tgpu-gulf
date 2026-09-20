@@ -41,7 +41,7 @@ jobs:
 
           changed = []
           for path in Path('.').rglob('*'):
-              if not path.is_file() or '.git' in path.parts or 'node_modules' in path.parts:
+              if not path.is_file() or '.git' in path.parts or 'node_modules' in path.parts or path.parts[:2] == ('.github','workflows'):
                   continue
               try:
                   text = path.read_text(encoding='utf-8')
@@ -59,7 +59,7 @@ jobs:
       - name: Verify non-Gulf public numbers are gone
         shell: bash
         run: |
-          if grep -RInE --exclude-dir=.git --exclude='normalize-public-contact.yml' '60129153527|0129153527|12-915[ -]3527|60126413812|0126413812|12-641[ -]3812' .; then
+          if grep -RInE --exclude-dir=.git --exclude-dir=.github '60129153527|0129153527|12-915[ -]3527|60126413812|0126413812|12-641[ -]3812' .; then
             echo 'Non-Gulf public number found; refusing to commit.'
             exit 1
           fi
