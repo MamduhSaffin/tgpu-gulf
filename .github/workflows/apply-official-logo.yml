@@ -1,0 +1,38 @@
+name: Apply official TGPU Gulf logo
+
+on:
+  push:
+    paths:
+      - '.github/workflows/apply-official-logo.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Use the new Gulf mark on the public site
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path=Path('index.html')
+          text=path.read_text(encoding='utf-8')
+          updated=text.replace('https://tgpu.my/assets/tgpu-logo.png','tgpu-gulf-logo.svg')
+          if updated!=text:
+              path.write_text(updated,encoding='utf-8')
+          PY
+      - name: Commit Gulf logo rollout
+        shell: bash
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name 'TGPU Gulf Brand Maintenance'
+          git config user.email 'mamduh@tgpugulf.com'
+          git add index.html
+          git commit -m 'Use official TGPU Gulf logo on public site'
+          git push origin HEAD:main
