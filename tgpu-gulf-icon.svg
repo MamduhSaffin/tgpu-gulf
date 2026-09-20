@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" role="img" aria-labelledby="title desc">
+  <title id="title">TGPU Gulf</title>
+  <desc id="desc">TGPU Gulf arch and palm icon.</desc>
+  <rect width="180" height="180" rx="40" fill="#fff"/>
+  <path d="M36 83C60 60 77 35 90 12c13 23 30 48 54 71" fill="none" stroke="#d5a32f" stroke-width="12" stroke-linecap="round"/>
+  <path d="M118 55c-2 46-10 83-24 112" fill="none" stroke="#057467" stroke-width="10" stroke-linecap="round"/>
+  <path d="M116 54c14-23 35-31 58-25-13 12-28 20-44 24 17-3 31 2 44 14-20 8-38 7-54-4" fill="none" stroke="#057467" stroke-width="7" stroke-linecap="round"/>
+  <path d="M116 55c-21-17-40-20-58-8 15 5 30 9 45 12-16 0-29 7-40 18 19 3 36-2 49-15" fill="none" stroke="#057467" stroke-width="7" stroke-linecap="round"/>
+</svg>
