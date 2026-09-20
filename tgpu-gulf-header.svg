@@ -1,1 +1,40 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 200" role="img" aria-labelledby="title desc"><title id="title">TGPU Gulf</title><desc id="desc">TGPU Gulf — Malaysia ↔ GCC</desc><image width="600" height="200" preserveAspectRatio="xMidYMid meet" href="data:image/webp;base64,UklGRjoBAABXRUJQVlA4WAoAAAAQAAAAVwIAxwAAQUxQSAkAAAABBxAREYiI/gcAVlA4IAoBAADQHQCdASpYAsgAPmEwlkikIyIhICgAgAwJaW7hd2EbQAnsA99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ96QAAP7/7nKAAAAAAAAAAAAAAAAAAA=="/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 260" role="img" aria-labelledby="title desc">
+  <title id="title">TGPU Gulf</title>
+  <desc id="desc">TGPU Gulf — Malaysia to GCC</desc>
+  <defs>
+    <linearGradient id="blue" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#0c87ff"/>
+      <stop offset="0.58" stop-color="#0754c4"/>
+      <stop offset="1" stop-color="#06306f"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#fff27a"/>
+      <stop offset="0.38" stop-color="#f6c232"/>
+      <stop offset="0.72" stop-color="#d59a1f"/>
+      <stop offset="1" stop-color="#fff3a0"/>
+    </linearGradient>
+    <linearGradient id="green" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#13d977"/>
+      <stop offset="1" stop-color="#008a48"/>
+    </linearGradient>
+    <filter id="softShadow" x="-8%" y="-15%" width="116%" height="130%">
+      <feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#00180f" flood-opacity="0.26"/>
+    </filter>
+  </defs>
+  <g filter="url(#softShadow)">
+    <path d="M340 95C393 58 426 28 457 6c31 53 70 85 132 121" fill="none" stroke="url(#gold)" stroke-width="21" stroke-linecap="round"/>
+    <text x="72" y="166" font-family="Arial Black, Arial, Helvetica, sans-serif" font-size="130" font-weight="900" letter-spacing="-6" fill="url(#blue)">TGPU</text>
+    <path d="M207 178C272 145 338 133 409 135" fill="none" stroke="url(#blue)" stroke-width="14" stroke-linecap="round"/>
+    <text x="531" y="178" font-family="Georgia, 'Times New Roman', serif" font-size="127" font-weight="700" fill="url(#gold)">Gulf</text>
+    <g fill="none" stroke="url(#green)" stroke-linecap="round" stroke-linejoin="round" transform="translate(775 48)">
+      <path d="M74 20C71 86 59 137 41 184" stroke-width="14"/>
+      <path d="M69 23C93-9 127-13 166 10C130 12 102 21 78 37C118 26 151 36 183 67C141 67 108 56 77 34" stroke-width="12"/>
+      <path d="M68 24C30-2 1 4-25 38C12 34 43 34 68 47C27 44-3 56-27 88C19 88 53 73 72 41" stroke-width="12"/>
+    </g>
+  </g>
+  <g font-family="Arial, Helvetica, sans-serif" font-weight="900" letter-spacing="7" font-size="32" filter="url(#softShadow)">
+    <text x="325" y="231" fill="url(#blue)">MALAYSIA</text>
+    <text x="535" y="231" fill="url(#green)" letter-spacing="0" font-size="44">↔</text>
+    <text x="607" y="231" fill="url(#blue)">GCC</text>
+  </g>
+</svg>
