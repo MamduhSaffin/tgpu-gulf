@@ -1,0 +1,43 @@
+name: Display approved TGPU Gulf logo correctly
+
+on:
+  push:
+    paths:
+      - '.github/workflows/apply-approved-logo-display.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fix header logo sizing and metadata
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace('.brand img{width:54px;height:54px;object-fit:contain}', '.brand img{width:82px;height:82px;object-fit:contain;flex:0 0 82px}')
+          s=s.replace('nav{display:flex;align-items:center;justify-content:space-between;gap:22px;min-height:78px}', 'nav{display:flex;align-items:center;justify-content:space-between;gap:22px;min-height:96px}')
+          s=s.replace('<img src="tgpu-gulf-logo.svg" alt="TGPU">', '<img src="tgpu-gulf-logo.svg?v=20260920-approved" alt="TGPU Gulf — Malaysia ↔ GCC">')
+          s=s.replace('<meta property="og:image" content="tgpu-gulf-logo.svg">', '<meta property="og:image" content="https://tgpugulf.com/tgpu-gulf/tgpu-gulf-logo.svg?v=20260920-approved">')
+          s=s.replace('<link rel="icon" href="tgpu-gulf-logo.svg">', '<link rel="icon" type="image/svg+xml" href="tgpu-gulf-logo.svg?v=20260920-approved">')
+          if '@media(max-width:620px)' in s and '.brand img{width:66px;height:66px;flex-basis:66px}' not in s:
+              s=s.replace('@media(max-width:620px){', '@media(max-width:620px){.brand img{width:66px;height:66px;flex-basis:66px}nav{min-height:82px}')
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit header logo fix
+        shell: bash
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name 'TGPU Gulf Brand Maintenance'
+          git config user.email 'mamduh@tgpugulf.com'
+          git add index.html
+          git commit -m 'Render approved TGPU Gulf logo in full'
+          git push origin HEAD:main
