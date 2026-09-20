@@ -39,129 +39,123 @@ jobs:
           from PIL import Image, ImageDraw, ImageFilter, ImageEnhance
           from collections import deque
           import os, math, base64
-          import numpy as np
 
-          def remove_black_bg_border_connected(src_path, hard=5, soft=100, pad=18):
-              im = Image.open(src_path).convert('RGB')
-              arr = np.array(im)
-              maxc = arr.max(axis=2)
-              mask = maxc < soft
-              h, w = mask.shape
-              seeds = np.zeros_like(mask, dtype=bool)
-              seeds[0, :] = mask[0, :]
-              seeds[-1, :] = mask[-1, :]
-              seeds[:, 0] = mask[:, 0]
-              seeds[:, -1] = mask[:, -1]
-              bg = np.zeros_like(mask, dtype=bool)
-              q = deque(zip(*np.where(seeds)))
-              for y, x in q:
-                  bg[y, x] = True
+          def black_alpha_remove(src, hard=5, soft=105, pad=18):
+              im = Image.open(src).convert('RGBA')
+              w, h = im.size
+              pix = im.load()
+              dark = [[False]*w for _ in range(h)]
+              for y in range(h):
+                  for x in range(w):
+                      r,g,b,a = pix[x,y]
+                      dark[y][x] = max(r,g,b) < soft
+              bg = [[False]*w for _ in range(h)]
+              q = deque()
+              for x in range(w):
+                  if dark[0][x]: q.append((x,0)); bg[0][x]=True
+                  if dark[h-1][x]: q.append((x,h-1)); bg[h-1][x]=True
+              for y in range(h):
+                  if dark[y][0] and not bg[y][0]: q.append((0,y)); bg[y][0]=True
+                  if dark[y][w-1] and not bg[y][w-1]: q.append((w-1,y)); bg[y][w-1]=True
               while q:
-                  y, x = q.popleft()
-                  for dy, dx in ((1,0),(-1,0),(0,1),(0,-1)):
-                      ny, nx = y + dy, x + dx
-                      if 0 <= ny < h and 0 <= nx < w and mask[ny, nx] and not bg[ny, nx]:
-                          bg[ny, nx] = True
-                          q.append((ny, nx))
-              alpha = np.full((h, w), 255, dtype=np.float32)
-              ramp = np.clip((maxc.astype(float) - hard) / (soft - hard) * 255, 0, 255)
-              alpha[bg] = ramp[bg]
-              alpha[alpha < 20] = 0
-              aimg = Image.fromarray(alpha.astype(np.uint8), 'L').filter(ImageFilter.GaussianBlur(0.45))
-              rgba = im.convert('RGBA')
-              rgba.putalpha(aimg)
-              a = np.array(rgba.getchannel('A'))
-              ys, xs = np.where(a > 5)
-              bbox = (max(0, int(xs.min()) - pad), max(0, int(ys.min()) - pad), min(w, int(xs.max()) + pad + 1), min(h, int(ys.max()) + pad + 1))
-              return rgba.crop(bbox)
+                  x,y = q.popleft()
+                  for nx,ny in ((x+1,y),(x-1,y),(x,y+1),(x,y-1)):
+                      if 0 <= nx < w and 0 <= ny < h and dark[ny][nx] and not bg[ny][nx]:
+                          bg[ny][nx] = True
+                          q.append((nx,ny))
+              out = Image.new('RGBA', (w,h), (0,0,0,0))
+              op = out.load()
+              for y in range(h):
+                  for x in range(w):
+                      r,g,b,a = pix[x,y]
+                      if bg[y][x]:
+                          m = max(r,g,b)
+                          na = int(max(0, min(255, (m-hard)/(soft-hard)*255)))
+                          if na < 18: na = 0
+                          op[x,y] = (r,g,b,na)
+                      else:
+                          op[x,y] = (r,g,b,a)
+              a = out.getchannel('A').filter(ImageFilter.GaussianBlur(0.45))
+              out.putalpha(a)
+              bbox = out.getbbox()
+              if bbox:
+                  l,t,r,b = bbox
+                  out = out.crop((max(0,l-pad), max(0,t-pad), min(w,r+pad), min(h,b+pad)))
+              return out
 
-          def trim_alpha(im):
-              im = im.convert('RGBA')
-              a = np.array(im.getchannel('A'))
-              ys, xs = np.where(a > 10)
-              return im.crop((int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1))
+          def fit(im, max_w=None, max_h=None):
+              w,h = im.size
+              scale = 1
+              if max_w: scale = min(scale, max_w/w)
+              if max_h: scale = min(scale, max_h/h)
+              return im.resize((max(1,int(w*scale)), max(1,int(h*scale))), Image.LANCZOS)
 
-          nav_source = 'tgpu-gulf-nav.jpg' if os.path.exists('tgpu-gulf-nav.jpg') else 'tgpu-gulf-brand.webp'
-          nav = trim_alpha(remove_black_bg_border_connected(nav_source, hard=5, soft=100, pad=18))
-          nav_w = 600
-          nav_h = int(nav.height * nav_w / nav.width)
-          nav_small = nav.resize((nav_w, nav_h), Image.LANCZOS)
-          nav_small.save('tgpu-gulf-nav-transparent.webp', quality=75, method=6)
-          with open('tgpu-gulf-nav-transparent.webp', 'rb') as f:
-              nav_b64 = base64.b64encode(f.read()).decode('ascii')
-          with open('tgpu-gulf-header.svg', 'w', encoding='utf-8') as f:
-              f.write(f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {nav_w} {nav_h}" role="img" aria-labelledby="title desc">\n  <title id="title">TGPU Gulf</title>\n  <desc id="desc">TGPU Gulf — Malaysia ↔ GCC</desc>\n  <image width="{nav_w}" height="{nav_h}" preserveAspectRatio="xMidYMid meet" href="data:image/webp;base64,{nav_b64}"/>\n</svg>\n''')
+          nav_src = 'tgpu-gulf-nav.jpg' if os.path.exists('tgpu-gulf-nav.jpg') else 'tgpu-gulf-brand.webp'
+          nav = black_alpha_remove(nav_src)
+          nav = fit(nav, max_w=680)
+          nav.save('tgpu-gulf-nav-transparent.webp', quality=82, method=6)
+          with open('tgpu-gulf-nav-transparent.webp','rb') as f:
+              b64 = base64.b64encode(f.read()).decode('ascii')
+          vw, vh = nav.size
+          with open('tgpu-gulf-header.svg','w',encoding='utf-8') as f:
+              f.write(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {vw} {vh}" role="img" aria-labelledby="title desc"><title id="title">TGPU Gulf</title><desc id="desc">TGPU Gulf — Malaysia ↔ GCC</desc><image width="{vw}" height="{vh}" preserveAspectRatio="xMidYMid meet" href="data:image/webp;base64,{b64}"/></svg>')
 
-          logo = trim_alpha(remove_black_bg_border_connected('tgpu-gulf-brand.webp', hard=5, soft=100, pad=18))
+          logo = black_alpha_remove('tgpu-gulf-brand.webp')
           rgb = logo.convert('RGB')
-          rgb = ImageEnhance.Brightness(rgb).enhance(1.18)
-          rgb = ImageEnhance.Color(rgb).enhance(1.22)
-          rgb = ImageEnhance.Contrast(rgb).enhance(1.08)
+          rgb = ImageEnhance.Brightness(rgb).enhance(1.12)
+          rgb = ImageEnhance.Color(rgb).enhance(1.14)
+          rgb = ImageEnhance.Contrast(rgb).enhance(1.05)
           logo = Image.merge('RGBA', (*rgb.split(), logo.getchannel('A')))
 
-          W, H = 1200, 630
-          yy, xx = np.mgrid[0:H, 0:W]
-          c1 = np.array([5, 35, 25], dtype=float)
-          c2 = np.array([19, 79, 55], dtype=float)
-          t = (xx / W * 0.45 + yy / H * 0.55)
-          bg = (c1 * (1 - t[..., None]) + c2 * t[..., None]).astype(np.uint8)
-          cx, cy = 600, 285
-          r = np.sqrt(((xx - cx) / 650) ** 2 + ((yy - cy) / 330) ** 2)
-          glow = np.clip(1 - r, 0, 1) ** 1.7
-          gcol = np.array([21, 100, 70])
-          bg = (bg * (1 - glow[..., None] * 0.38) + gcol * (glow[..., None] * 0.38)).astype(np.uint8)
-          edge = ((np.abs(xx - W / 2) / (W / 2)) ** 1.7) * 0.25
-          bg = (bg * (1 - edge[..., None])).astype(np.uint8)
-          background = Image.fromarray(bg, 'RGB').convert('RGBA')
-          draw = ImageDraw.Draw(background, 'RGBA')
-          for i in range(-120, 340, 42):
-              for j in range(-100, 270, 42):
-                  draw.line([(i, j + 21), (i + 21, j), (i + 42, j + 21), (i + 21, j + 42), (i, j + 21)], fill=(255, 215, 120, 10), width=2)
-          panel = Image.new('RGBA', (W, H), (0, 0, 0, 0))
-          pd = ImageDraw.Draw(panel, 'RGBA')
-          pd.rounded_rectangle((115, 80, 1085, 555), radius=60, fill=(0, 0, 0, 60))
-          panel = panel.filter(ImageFilter.GaussianBlur(45))
-          background = Image.alpha_composite(background, panel)
-          draw = ImageDraw.Draw(background, 'RGBA')
-          for offset, alpha, width in [(0, 72, 3), (52, 40, 2)]:
-              pts = [(x, H - 85 - offset + 55 * math.sin((x - 130) / 270)) for x in range(-50, W + 51, 20)]
-              draw.line(pts, fill=(240, 210, 120, alpha), width=width)
-          target_w = 1015
-          target_h = int(logo.height * target_w / logo.width)
-          if target_h > 548:
-              target_h = 548
-              target_w = int(logo.width * target_h / logo.height)
-          logo_res = logo.resize((target_w, target_h), Image.LANCZOS)
-          x = (W - target_w) // 2
-          y = (H - target_h) // 2 - 2
-          alpha = logo_res.getchannel('A')
-          shadow = Image.new('RGBA', logo_res.size, (0, 0, 0, 0))
-          shadow.putalpha(alpha.filter(ImageFilter.GaussianBlur(13)).point(lambda p: int(p * 0.70)))
-          background.alpha_composite(shadow, (x + 9, y + 13))
-          light = Image.new('RGBA', logo_res.size, (255, 220, 95, 0))
-          light.putalpha(alpha.filter(ImageFilter.GaussianBlur(18)).point(lambda p: int(p * 0.18)))
-          background.alpha_composite(light, (x, y))
-          background.alpha_composite(logo_res, (x, y))
-          rr = np.sqrt(((xx - W / 2) / (W / 2)) ** 2 + ((yy - H / 2) / (H / 2)) ** 2)
-          v = np.clip((rr - 0.6) / 0.55, 0, 1) ** 2
-          vig = np.zeros((H, W, 4), dtype=np.uint8)
-          vig[..., 3] = (v * 100).astype(np.uint8)
-          background = Image.alpha_composite(background, Image.fromarray(vig, 'RGBA'))
-          background.convert('RGB').save('tgpu-gulf-brand.webp', quality=80, method=6)
-          background.convert('RGB').save('tgpu-gulf-share.jpg', quality=94, subsampling=2, optimize=True)
-
-          workflow = '.github/workflows/oneoff-brand-polish.yml'
-          if os.path.exists(workflow):
-              os.remove(workflow)
+          W,H = 1200,630
+          bg = Image.new('RGBA',(W,H),(5,35,25,255))
+          p = bg.load()
+          for y in range(H):
+              for x in range(W):
+                  t = (x/W*0.42 + y/H*0.58)
+                  r = int(5*(1-t)+19*t)
+                  g = int(35*(1-t)+79*t)
+                  b = int(25*(1-t)+55*t)
+                  d = (((x-600)/650)**2 + ((y-285)/330)**2) ** 0.5
+                  glow = max(0,1-d) ** 1.7
+                  r = int(r*(1-glow*.34)+21*(glow*.34))
+                  g = int(g*(1-glow*.34)+100*(glow*.34))
+                  b = int(b*(1-glow*.34)+70*(glow*.34))
+                  p[x,y]=(r,g,b,255)
+          draw = ImageDraw.Draw(bg,'RGBA')
+          for i in range(-120,330,42):
+              for j in range(-100,250,42):
+                  draw.line([(i,j+21),(i+21,j),(i+42,j+21),(i+21,j+42),(i,j+21)], fill=(255,215,120,10), width=2)
+          panel = Image.new('RGBA',(W,H),(0,0,0,0))
+          pd = ImageDraw.Draw(panel,'RGBA')
+          pd.rounded_rectangle((120,80,1080,555), radius=60, fill=(0,0,0,58))
+          bg = Image.alpha_composite(bg, panel.filter(ImageFilter.GaussianBlur(45)))
+          draw = ImageDraw.Draw(bg,'RGBA')
+          for off, alpha, width in [(0,70,3),(52,38,2)]:
+              pts=[(x, H-88-off+55*math.sin((x-130)/270)) for x in range(-50,W+51,20)]
+              draw.line(pts, fill=(240,210,120,alpha), width=width)
+          logo = fit(logo, max_w=1015, max_h=548)
+          x=(W-logo.width)//2
+          y=(H-logo.height)//2-2
+          a=logo.getchannel('A')
+          shadow=Image.new('RGBA',logo.size,(0,0,0,0))
+          shadow.putalpha(a.filter(ImageFilter.GaussianBlur(13)).point(lambda v:int(v*.70)))
+          bg.alpha_composite(shadow,(x+9,y+13))
+          light=Image.new('RGBA',logo.size,(255,220,95,0))
+          light.putalpha(a.filter(ImageFilter.GaussianBlur(18)).point(lambda v:int(v*.16)))
+          bg.alpha_composite(light,(x,y))
+          bg.alpha_composite(logo,(x,y))
+          bg.convert('RGB').save('tgpu-gulf-brand.webp', quality=82, method=6)
+          bg.convert('RGB').save('tgpu-gulf-share.jpg', quality=94, subsampling=2, optimize=True)
           PY
 
       - name: Commit refined assets
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add tgpu-gulf-header.svg tgpu-gulf-brand.webp tgpu-gulf-share.jpg tgpu-gulf-nav-transparent.webp .github/workflows/oneoff-brand-polish.yml
+          git add tgpu-gulf-header.svg tgpu-gulf-brand.webp tgpu-gulf-share.jpg tgpu-gulf-nav-transparent.webp
           git commit -m "Polish transparent TGPU Gulf logo and hero branding" || echo "No changes to commit"
-          git push
+          git push || true
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
