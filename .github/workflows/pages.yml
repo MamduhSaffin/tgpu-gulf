@@ -33,7 +33,13 @@ jobs:
           convert tgpu-gulf-approved.png -trim +repage -resize '205x98>' /tmp/gulf-approved-logo.png
           convert /tmp/gulf-base.png -fill white -draw 'roundrectangle 28,14 514,123 18,18' /tmp/gulf-card.png
           convert /tmp/gulf-card.png /tmp/gulf-approved-logo.png -gravity northwest -geometry +170+19 -composite -quality 90 tgpu-gulf-approved-banner.webp
+
+          # Use the corrected banner both on-page and for WhatsApp/Facebook previews.
+          sed -i 's#tgpu-gulf-brand.webp?v=20260922-approved-banner#tgpu-gulf-approved-banner.webp?v=20260922-approved-logo#g' index.html
+          sed -i 's#https://tgpugulf.com/tgpu-gulf/tgpu-gulf-brand.webp?v=20260922-approved-banner#https://tgpugulf.com/tgpu-gulf/tgpu-gulf-approved-banner.webp?v=20260922-approved-logo#g' index.html
+
           test -s tgpu-gulf-approved-banner.webp
+          grep -q 'tgpu-gulf-approved-banner.webp' index.html
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
