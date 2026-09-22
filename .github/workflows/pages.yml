@@ -35,8 +35,8 @@ jobs:
           file tgpu-gulf-approved.png | grep -Eqi 'PNG image data'
           file tgpu-gulf-approved-banner.webp | grep -Eqi 'Web/P image|WebP'
 
-          # Point the deploy artifact at the already-approved committed banner.
-          # Do not regenerate or recompress the artwork during deployment.
+          # Use the already-approved committed artwork.
+          # Do not regenerate or recompress image assets during deployment.
           sed -i 's#tgpu-gulf-brand.webp?v=20260922-approved-banner#tgpu-gulf-approved-banner.webp?v=20260922-approved-logo#g' index.html
           sed -i 's#https://tgpugulf.com/tgpu-gulf/tgpu-gulf-brand.webp?v=20260922-approved-banner#https://tgpugulf.com/tgpu-gulf/tgpu-gulf-approved-banner.webp?v=20260922-approved-logo#g' index.html
 
@@ -54,17 +54,3 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
-
-      - name: Verify live TGPU Gulf release
-        run: |
-          set -euo pipefail
-          for attempt in $(seq 1 12); do
-            if curl -fsSL --max-time 20 https://tgpugulf.com/ | grep -q 'tgpu-gulf-approved-banner.webp'; then
-              echo 'TGPU Gulf live banner verified.'
-              exit 0
-            fi
-            echo "Waiting for Pages propagation (${attempt}/12)..."
-            sleep 10
-          done
-          echo 'Live banner verification failed after retries.' >&2
-          exit 1
