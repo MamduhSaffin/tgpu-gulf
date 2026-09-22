@@ -24,10 +24,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-      - name: Rebuild approved TGPU Gulf banner
-        run: cat gulf-banner.b64.1 gulf-banner.b64.2 gulf-banner.b64.3 | base64 --decode > tgpu-gulf-brand.webp
       - name: Configure Pages
         uses: actions/configure-pages@v5
+      - name: Verify approved banner exists
+        run: test -s tgpu-gulf-brand.webp
       - name: Upload static site
         uses: actions/upload-pages-artifact@v4
         with:
