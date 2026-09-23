@@ -25,79 +25,66 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Prepare approved green-gold branding and social preview
+      - name: Prepare approved green-gold branding and social sharing
         run: |
           set -euo pipefail
           sudo apt-get update
           sudo apt-get install -y imagemagick
 
-          fetch_asset() {
-            live_url="$1"
-            fallback_url="$2"
-            output="$3"
-            if curl -fL --retry 2 --connect-timeout 10 "$live_url" -o "$output"; then
-              echo "Recovered approved asset from the live site: $live_url"
-            else
-              echo "Seeding approved asset from the approved Drive source"
-              curl -fL --retry 3 --connect-timeout 15 "$fallback_url" -o "$output"
-            fi
-            test -s "$output"
-          }
+          # Use only the approved assets committed in the repository.
+          # This avoids expiring temporary links and prevents unapproved replacements.
+          test -s tgpu-gulf-approved.png
+          test -s tgpu-gulf-approved-banner.webp
+          test -s index.html
 
-          LOGO_LIVE="https://tgpugulf.com/tgpu-gulf-logo-approved-green-gold-20260923.webp"
-          BANNER_LIVE="https://tgpugulf.com/tgpu-gulf-hero-approved-green-gold-20260923.webp"
-          FAVICON_LIVE="https://tgpugulf.com/tgpu-gulf-favicon-approved-green-gold-20260923.png"
+          # Generate a dedicated green/gold favicon from the approved logo.
+          convert tgpu-gulf-approved.png \
+            -resize '256x256>' -background '#fffdf8' -gravity center -extent 256x256 -strip \
+            tgpu-gulf-favicon-approved-green-gold-20260923.png
 
-          LOGO_SEED='https://sdmntprindiasocentral.oaiusercontent.com/files/00000000-1d28-8211-b767-ebb5dd8b6c03/raw?se=2026-09-23T01%3A08%3A40Z&sp=r&sv=2026-02-06&sr=b&scid=f844b688-33c3-5bd4-8d1b-82a6effd4512&skoid=fb469448-2cc9-41bd-a5a6-6e020952b47a&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-22T22%3A50%3A36Z&ske=2026-09-23T22%3A50%3A36Z&sks=b&skv=2026-02-06&sig=MOaUvSXWDYZkdIhsTOyV6AL7CBpOBCNVrZW7WnvYWho%3D'
-          BANNER_SEED='https://sdmntprkoreacentral.oaiusercontent.com/files/00000000-a3c8-8206-b6ae-9d5f757af05d/raw?se=2026-09-23T01%3A08%3A47Z&sp=r&sv=2026-02-06&sr=b&scid=1a3ea94a-e88a-59c5-b3d8-7e1426ffda87&skoid=fb469448-2cc9-41bd-a5a6-6e020952b47a&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-22T23%3A03%3A29Z&ske=2026-09-23T23%3A03%3A29Z&sks=b&skv=2026-02-06&sig=j4Y90fwRbd4a7eI5JOwTLvh7XV73LgWoUE9JRuvJ7rM%3D'
-          FAVICON_SEED='https://sdmntprindiasocentral.oaiusercontent.com/files/00000000-8748-8211-8066-f8dbf4523fd3/raw?se=2026-09-23T01%3A08%3A53Z&sp=r&sv=2026-02-06&sr=b&scid=3962485e-1eb2-5c61-9fc5-28ee101f5634&skoid=fb469448-2cc9-41bd-a5a6-6e020952b47a&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-22T23%3A46%3A15Z&ske=2026-09-23T23%3A46%3A15Z&sks=b&skv=2026-02-06&sig=z7nc6R96NFmA2H0MMdwFpK8GD07HMEu3PZihhgnjrzc%3D'
+          # Generate the social card without cropping the approved 3:1 banner artwork.
+          convert tgpu-gulf-approved-banner.webp \
+            -resize '1200x630>' -background '#123b2c' -gravity center -extent 1200x630 -strip \
+            tgpu-gulf-social-preview-green-gold-20260923.png
 
-          fetch_asset "$LOGO_LIVE" "$LOGO_SEED" /tmp/tgpu-gulf-logo-source
-          fetch_asset "$BANNER_LIVE" "$BANNER_SEED" /tmp/tgpu-gulf-banner-source
-          fetch_asset "$FAVICON_LIVE" "$FAVICON_SEED" /tmp/tgpu-gulf-favicon-source
-
-          convert /tmp/tgpu-gulf-logo-source -resize '900x900>' -strip -quality 90 tgpu-gulf-logo-approved-green-gold-20260923.webp
-          convert /tmp/tgpu-gulf-banner-source -resize '1800x600^' -gravity center -extent 1800x600 -strip -quality 88 tgpu-gulf-hero-approved-green-gold-20260923.webp
-          convert /tmp/tgpu-gulf-favicon-source -resize '256x256^' -gravity center -extent 256x256 -strip tgpu-gulf-favicon-approved-green-gold-20260923.png
-          convert tgpu-gulf-hero-approved-green-gold-20260923.webp -resize '1200x630^' -gravity center -extent 1200x630 -strip tgpu-gulf-social-preview-green-gold-20260923.png
-
-          file tgpu-gulf-logo-approved-green-gold-20260923.webp | grep -Eqi 'Web/P image|WebP'
-          file tgpu-gulf-hero-approved-green-gold-20260923.webp | grep -Eqi 'Web/P image|WebP'
           file tgpu-gulf-favicon-approved-green-gold-20260923.png | grep -Eqi 'PNG image data'
           file tgpu-gulf-social-preview-green-gold-20260923.png | grep -Eqi 'PNG image data'
 
-          test -s index.html
           python3 <<'PY'
           from pathlib import Path
           import re
 
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
-          banner = '''<section class="approved-hero-banner" aria-label="TGPU Gulf approved green and gold banner"><div class="banner-wrap"><img src="tgpu-gulf-hero-approved-green-gold-20260923.webp?v=20260923-visible" width="1800" height="600" alt="TGPU Gulf — Bridging Malaysia and the GCC" fetchpriority="high" decoding="async"></div></section>'''
-          style = '''<style id="approved-banner-clean">.approved-hero-banner{display:block!important;padding:14px 0 18px!important;background:#fff!important}.approved-hero-banner .banner-wrap{width:min(1600px,calc(100% - 24px))!important;margin:auto!important}.approved-hero-banner img{display:block!important;width:100%!important;height:auto!important;aspect-ratio:3/1!important;object-fit:cover!important;border-radius:20px!important;box-shadow:0 14px 34px rgba(8,41,30,.14)!important}.hero-brand-logo{display:none!important}@media(max-width:640px){.approved-hero-banner{padding:8px 0 12px!important}.approved-hero-banner .banner-wrap{width:calc(100% - 12px)!important}.approved-hero-banner img{border-radius:14px!important}}</style>'''
-          social = 'https://tgpugulf.com/tgpu-gulf-social-preview-green-gold-20260923.png'
+          banner = '<section class="approved-hero-banner" aria-label="TGPU Gulf approved green and gold banner"><div class="banner-wrap"><img src="tgpu-gulf-approved-banner.webp?v=20260923-visible2" width="1800" height="600" alt="TGPU Gulf — Bridging Malaysia and the GCC" fetchpriority="high" decoding="async"></div></section>'
+          style = '<style id="approved-banner-clean">.approved-hero-banner{display:block!important;padding:14px 0 18px!important;background:#fff!important}.approved-hero-banner .banner-wrap{width:min(1600px,calc(100% - 24px))!important;margin:auto!important}.approved-hero-banner img{display:block!important;width:100%!important;height:auto!important;aspect-ratio:3/1!important;object-fit:cover!important;border-radius:20px!important;box-shadow:0 14px 34px rgba(8,41,30,.14)!important}.hero-brand-logo{display:none!important}@media(max-width:640px){.approved-hero-banner{padding:8px 0 12px!important}.approved-hero-banner .banner-wrap{width:calc(100% - 12px)!important}.approved-hero-banner img{border-radius:14px!important}}</style>'
+          social = 'https://tgpugulf.com/tgpu-gulf-social-preview-green-gold-20260923.png?v=20260923-social2'
+          favicon = 'tgpu-gulf-favicon-approved-green-gold-20260923.png?v=20260923-favicon2'
 
-          s = s.replace('tgpu-gulf-approved.png', 'tgpu-gulf-logo-approved-green-gold-20260923.webp')
+          # Keep the approved logo in navigation/header.
+          s = s.replace('tgpu-gulf-logo-approved-green-gold-20260923.webp', 'tgpu-gulf-approved.png')
+
+          # One clean visible banner, then the existing text-led hero below it.
           s = re.sub(r'<section class="approved-hero-banner".*?</section>', '', s, flags=re.S)
-          s = s.replace('<main id="top">', '<main id="top">\n' + banner, 1)
+          if '<main id="top">' in s:
+              s = s.replace('<main id="top">', '<main id="top">\n' + banner, 1)
           if 'approved-banner-clean' not in s:
               s = s.replace('</head>', style + '</head>', 1)
-          s = re.sub(r'(<link rel="icon" type="image/png" href=")[^"]+("[^>]*>)', r'\1tgpu-gulf-favicon-approved-green-gold-20260923.png\2', s, count=1)
+
           s = re.sub(r'(<meta property="og:image" content=")[^"]+("[^>]*>)', r'\1' + social + r'\2', s, count=1)
           s = re.sub(r'(<meta name="twitter:image" content=")[^"]+("[^>]*>)', r'\1' + social + r'\2', s, count=1)
           s = re.sub(r'(<meta property="og:image:width" content=")[^"]+("[^>]*>)', r'\g<1>1200\2', s, count=1)
           s = re.sub(r'(<meta property="og:image:height" content=")[^"]+("[^>]*>)', r'\g<1>630\2', s, count=1)
+          s = re.sub(r'(<link rel="icon" type="image/png" href=")[^"]+("[^>]*>)', r'\1' + favicon + r'\2', s, count=1)
+
           p.write_text(s, encoding='utf-8')
           PY
 
-          grep -q 'tgpu-gulf-logo-approved-green-gold-20260923.webp' index.html
-          grep -q 'tgpu-gulf-hero-approved-green-gold-20260923.webp' index.html
-          grep -q 'tgpu-gulf-favicon-approved-green-gold-20260923.png' index.html
+          grep -q 'src="tgpu-gulf-approved.png"' index.html
+          grep -q 'tgpu-gulf-approved-banner.webp' index.html
           grep -q 'tgpu-gulf-social-preview-green-gold-20260923.png' index.html
+          grep -q 'tgpu-gulf-favicon-approved-green-gold-20260923.png' index.html
           grep -q '<section class="approved-hero-banner"' index.html
-
-          # Do not publish stale blue/legacy logo variants on the live site.
-          rm -f tgpu-gulf-logo.svg tgpu-gulf-header.svg tgpu-gulf-icon.svg tgpu-gulf-approved.png tgpu-gulf-brand.webp tgpu-gulf-approved-banner.webp
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
