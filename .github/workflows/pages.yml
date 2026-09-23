@@ -25,23 +25,29 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Validate and activate approved TGPU Gulf banner
+      - name: Prepare TGPU Gulf banner and social metadata
         run: |
           set -euo pipefail
 
           test -s tgpu-gulf-approved.png
           test -s tgpu-gulf-approved-banner.webp
+          test -s index.html
 
           file tgpu-gulf-approved.png | grep -Eqi 'PNG image data'
           file tgpu-gulf-approved-banner.webp | grep -Eqi 'Web/P image|WebP'
 
-          # Use the already-approved committed artwork.
-          # Do not regenerate or recompress image assets during deployment.
-          sed -i 's#tgpu-gulf-brand.webp?v=20260922-approved-banner#tgpu-gulf-approved-banner.webp?v=20260922-approved-logo#g' index.html
-          sed -i 's#https://tgpugulf.com/tgpu-gulf/tgpu-gulf-brand.webp?v=20260922-approved-banner#https://tgpugulf.com/tgpu-gulf/tgpu-gulf-approved-banner.webp?v=20260922-approved-logo#g' index.html
+          # The approved wide artwork is for social sharing only.
+          # Do not display it as a second homepage hero/banner.
+          sed -i '/<section class="approved-hero-banner"/d' index.html
 
-          grep -q 'tgpu-gulf-approved-banner.webp' index.html
-          ! grep -q 'tgpu-gulf-brand.webp?v=20260922-approved-banner' index.html
+          # Fix Open Graph / Twitter image URLs. The site is deployed at the
+          # custom-domain root, so there must not be an extra /tgpu-gulf/ path.
+          sed -i 's#https://tgpugulf.com/tgpu-gulf/tgpu-gulf-brand.webp?v=20260922-approved-banner#https://tgpugulf.com/tgpu-gulf-approved-banner.webp?v=20260923-share#g' index.html
+          sed -i 's#https://tgpugulf.com/tgpu-gulf/tgpu-gulf-approved-banner.webp?v=20260922-approved-logo#https://tgpugulf.com/tgpu-gulf-approved-banner.webp?v=20260923-share#g' index.html
+
+          grep -q 'https://tgpugulf.com/tgpu-gulf-approved-banner.webp?v=20260923-share' index.html
+          ! grep -q 'https://tgpugulf.com/tgpu-gulf/' index.html
+          ! grep -q '<section class="approved-hero-banner"' index.html
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
