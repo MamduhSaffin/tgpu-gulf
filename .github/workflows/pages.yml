@@ -25,29 +25,60 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Prepare TGPU Gulf banner and social metadata
+      - name: Prepare approved green-gold branding
         run: |
           set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y imagemagick
 
-          test -s tgpu-gulf-approved.png
-          test -s tgpu-gulf-approved-banner.webp
+          fetch_asset() {
+            live_url="$1"
+            fallback_url="$2"
+            output="$3"
+            if curl -fL --retry 2 --connect-timeout 10 "$live_url" -o "$output"; then
+              echo "Recovered approved asset from the live site: $live_url"
+            else
+              echo "Seeding approved asset from the approved Drive source"
+              curl -fL --retry 3 --connect-timeout 15 "$fallback_url" -o "$output"
+            fi
+            test -s "$output"
+          }
+
+          LOGO_LIVE="https://tgpugulf.com/tgpu-gulf-logo-approved-green-gold-20260923.webp"
+          BANNER_LIVE="https://tgpugulf.com/tgpu-gulf-hero-approved-green-gold-20260923.webp"
+          FAVICON_LIVE="https://tgpugulf.com/tgpu-gulf-favicon-approved-green-gold-20260923.png"
+
+          LOGO_SEED='https://sdmntprindiasocentral.oaiusercontent.com/files/00000000-1d28-8211-b767-ebb5dd8b6c03/raw?se=2026-09-23T01%3A08%3A40Z&sp=r&sv=2026-02-06&sr=b&scid=f844b688-33c3-5bd4-8d1b-82a6effd4512&skoid=fb469448-2cc9-41bd-a5a6-6e020952b47a&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-22T22%3A50%3A36Z&ske=2026-09-23T22%3A50%3A36Z&sks=b&skv=2026-02-06&sig=MOaUvSXWDYZkdIhsTOyV6AL7CBpOBCNVrZW7WnvYWho%3D'
+          BANNER_SEED='https://sdmntprkoreacentral.oaiusercontent.com/files/00000000-a3c8-8206-b6ae-9d5f757af05d/raw?se=2026-09-23T01%3A08%3A47Z&sp=r&sv=2026-02-06&sr=b&scid=1a3ea94a-e88a-59c5-b3d8-7e1426ffda87&skoid=fb469448-2cc9-41bd-a5a6-6e020952b47a&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-22T23%3A03%3A29Z&ske=2026-09-23T23%3A03%3A29Z&sks=b&skv=2026-02-06&sig=j4Y90fwRbd4a7eI5JOwTLvh7XV73LgWoUE9JRuvJ7rM%3D'
+          FAVICON_SEED='https://sdmntprindiasocentral.oaiusercontent.com/files/00000000-8748-8211-8066-f8dbf4523fd3/raw?se=2026-09-23T01%3A08%3A53Z&sp=r&sv=2026-02-06&sr=b&scid=3962485e-1eb2-5c61-9fc5-28ee101f5634&skoid=fb469448-2cc9-41bd-a5a6-6e020952b47a&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-22T23%3A46%3A15Z&ske=2026-09-23T23%3A46%3A15Z&sks=b&skv=2026-02-06&sig=z7nc6R96NFmA2H0MMdwFpK8GD07HMEu3PZihhgnjrzc%3D'
+
+          fetch_asset "$LOGO_LIVE" "$LOGO_SEED" /tmp/tgpu-gulf-logo-source
+          fetch_asset "$BANNER_LIVE" "$BANNER_SEED" /tmp/tgpu-gulf-banner-source
+          fetch_asset "$FAVICON_LIVE" "$FAVICON_SEED" /tmp/tgpu-gulf-favicon-source
+
+          convert /tmp/tgpu-gulf-logo-source -resize '900x900>' -strip -quality 90 tgpu-gulf-logo-approved-green-gold-20260923.webp
+          convert /tmp/tgpu-gulf-banner-source -resize '1800x600^' -gravity center -extent 1800x600 -strip -quality 88 tgpu-gulf-hero-approved-green-gold-20260923.webp
+          convert /tmp/tgpu-gulf-favicon-source -resize '256x256^' -gravity center -extent 256x256 -strip tgpu-gulf-favicon-approved-green-gold-20260923.png
+
+          file tgpu-gulf-logo-approved-green-gold-20260923.webp | grep -Eqi 'Web/P image|WebP'
+          file tgpu-gulf-hero-approved-green-gold-20260923.webp | grep -Eqi 'Web/P image|WebP'
+          file tgpu-gulf-favicon-approved-green-gold-20260923.png | grep -Eqi 'PNG image data'
+
           test -s index.html
+          sed -i 's#src="tgpu-gulf-approved.png"#src="tgpu-gulf-logo-approved-green-gold-20260923.webp"#g' index.html
+          sed -i 's#src="tgpu-gulf-brand.webp?v=20260922-approved-banner"#src="tgpu-gulf-hero-approved-green-gold-20260923.webp"#g' index.html
+          sed -i 's#<link rel="icon" type="image/png" href="[^"]*">#<link rel="icon" type="image/png" href="tgpu-gulf-favicon-approved-green-gold-20260923.png">#g' index.html
+          sed -i 's#https://tgpugulf.com/tgpu-gulf/tgpu-gulf-brand.webp?v=20260922-approved-banner#https://tgpugulf.com/tgpu-gulf-hero-approved-green-gold-20260923.webp#g' index.html
+          sed -i 's#https://tgpugulf.com/tgpu-gulf-approved-banner.webp?v=20260923-share#https://tgpugulf.com/tgpu-gulf-hero-approved-green-gold-20260923.webp#g' index.html
+          sed -i 's#aspect-ratio:16/9;object-fit:cover#object-fit:contain#g' index.html
 
-          file tgpu-gulf-approved.png | grep -Eqi 'PNG image data'
-          file tgpu-gulf-approved-banner.webp | grep -Eqi 'Web/P image|WebP'
+          grep -q 'tgpu-gulf-logo-approved-green-gold-20260923.webp' index.html
+          grep -q 'tgpu-gulf-hero-approved-green-gold-20260923.webp' index.html
+          grep -q 'tgpu-gulf-favicon-approved-green-gold-20260923.png' index.html
+          grep -q '<section class="approved-hero-banner"' index.html
 
-          # The approved wide artwork is for social sharing only.
-          # Do not display it as a second homepage hero/banner.
-          sed -i '/<section class="approved-hero-banner"/d' index.html
-
-          # Fix Open Graph / Twitter image URLs. The site is deployed at the
-          # custom-domain root, so there must not be an extra /tgpu-gulf/ path.
-          sed -i 's#https://tgpugulf.com/tgpu-gulf/tgpu-gulf-brand.webp?v=20260922-approved-banner#https://tgpugulf.com/tgpu-gulf-approved-banner.webp?v=20260923-share#g' index.html
-          sed -i 's#https://tgpugulf.com/tgpu-gulf/tgpu-gulf-approved-banner.webp?v=20260922-approved-logo#https://tgpugulf.com/tgpu-gulf-approved-banner.webp?v=20260923-share#g' index.html
-
-          grep -q 'https://tgpugulf.com/tgpu-gulf-approved-banner.webp?v=20260923-share' index.html
-          ! grep -q 'https://tgpugulf.com/tgpu-gulf/' index.html
-          ! grep -q '<section class="approved-hero-banner"' index.html
+          # Do not publish stale blue/legacy logo variants on the live site.
+          rm -f tgpu-gulf-logo.svg tgpu-gulf-header.svg tgpu-gulf-icon.svg tgpu-gulf-approved.png tgpu-gulf-brand.webp tgpu-gulf-approved-banner.webp
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
