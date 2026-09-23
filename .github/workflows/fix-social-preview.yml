@@ -1,0 +1,44 @@
+name: Fix social preview metadata
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-social-preview.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Point Open Graph and Twitter to the permanent static share image
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+          old = 'https://tgpugulf.com/tgpu-gulf/tgpu-gulf-brand.webp?v=20260922-approved-banner'
+          new = 'https://tgpugulf.com/tgpu-gulf-share.jpg?v=20260923-static'
+          if old not in text:
+              raise SystemExit('Expected old social-image URL was not found; refusing to make a blind edit.')
+          text = text.replace(old, new)
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Commit the metadata fix
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          if git diff --cached --quiet; then
+            echo 'No changes needed.'
+            exit 0
+          fi
+          git commit -m 'Fix WhatsApp and Open Graph preview image'
+          git push
