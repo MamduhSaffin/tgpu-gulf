@@ -23,74 +23,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
-      - name: Prepare approved green-gold branding and social sharing
+      - name: Verify permanent approved branding
         run: |
           set -euo pipefail
 
-          LOGO_LIVE='https://tgpugulf.com/tgpu-gulf-logo-approved-green-gold-20260923.webp'
-          HERO_LIVE='https://tgpugulf.com/tgpu-gulf-hero-approved-green-gold-20260923.webp'
-          FAVICON_LIVE='https://tgpugulf.com/tgpu-gulf-favicon-approved-green-gold-20260923.png'
-          LOGO_SEED='https://sdmntprindiasocentral.oaiusercontent.com/files/00000000-e500-8211-ad84-28f5f0e4b9fa/raw?se=2026-09-23T01%3A36%3A21Z&sp=r&sv=2026-02-06&sr=b&scid=4e4140bc-db6e-54a1-aab3-1c3bb9c090b7&skoid=fb469448-2cc9-41bd-a5a6-6e020952b47a&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-22T23%3A01%3A30Z&ske=2026-09-23T23%3A01%3A30Z&sks=b&skv=2026-02-06&sig=SqgWce%2BL0Levn1ODUunefMnz2VUajqt9A9EeEn/BZZU%3D'
-          HERO_SEED='https://sdmntprseasia.oaiusercontent.com/files/00000000-1470-8207-9912-a2428e819947/raw?se=2026-09-23T01%3A36%3A29Z&sp=r&sv=2026-02-06&sr=b&scid=440a1d31-8aef-5cd3-b9a9-740434d7c0b8&skoid=fb469448-2cc9-41bd-a5a6-6e020952b47a&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-22T23%3A52%3A21Z&ske=2026-09-23T23%3A52%3A21Z&sks=b&skv=2026-02-06&sig=kFZRB0W9toi%2BX6pV3dgWLNTwjq8WAnRj3tP%2BHrttN7M%3D'
-          FAVICON_SEED='https://sdmntprindiasocentral.oaiusercontent.com/files/00000000-a058-8211-9a30-6c5bd9aa1c64/raw?se=2026-09-23T01%3A36%3A38Z&sp=r&sv=2026-02-06&sr=b&scid=95c9ec4e-8570-5bfa-b5e2-96dd58a1987a&skoid=fb469448-2cc9-41bd-a5a6-6e020952b47a&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-22T23%3A01%3A30Z&ske=2026-09-23T23%3A01%3A30Z&sks=b&skv=2026-02-06&sig=rwTvarqGJGibSwqe6/6WWrzOoAgd/zraRo9IkQ5PaSA%3D'
-
-          grab() {
-            live="$1"; seed="$2"; out="$3"
-            if ! curl -fL --retry 1 --connect-timeout 8 "$live" -o "$out"; then
-              curl -fL --retry 2 --connect-timeout 12 "$seed" -o "$out"
-            fi
-            test -s "$out"
-          }
-          grab "$LOGO_LIVE" "$LOGO_SEED" /tmp/approved-gulf-logo
-          grab "$HERO_LIVE" "$HERO_SEED" /tmp/approved-gulf-hero
-          grab "$FAVICON_LIVE" "$FAVICON_SEED" /tmp/approved-gulf-favicon
+          # Permanent approved asset only: no expiring Drive URLs and no image conversion.
+          test -s tgpu-gulf-approved.png
           test -s index.html
-
-          sudo apt-get update
-          sudo apt-get install -y imagemagick
-
-          convert /tmp/approved-gulf-logo -resize '900x900>' -strip -quality 90 \
-            tgpu-gulf-logo-approved-green-gold-20260923.webp
-          convert /tmp/approved-gulf-hero -resize '1800x600^' -gravity center -extent 1800x600 -strip -quality 88 \
-            tgpu-gulf-hero-approved-green-gold-20260923.webp
-          convert /tmp/approved-gulf-favicon -resize '256x256^' -gravity center -extent 256x256 -strip \
-            tgpu-gulf-favicon-approved-green-gold-20260923.png
-          convert tgpu-gulf-hero-approved-green-gold-20260923.webp \
-            -resize '1200x630>' -background '#123b2c' -gravity center -extent 1200x630 -strip \
-            tgpu-gulf-social-preview-green-gold-20260923.png
-
-          file tgpu-gulf-logo-approved-green-gold-20260923.webp | grep -Eqi 'Web/P image|WebP'
-          file tgpu-gulf-hero-approved-green-gold-20260923.webp | grep -Eqi 'Web/P image|WebP'
-          file tgpu-gulf-favicon-approved-green-gold-20260923.png | grep -Eqi 'PNG image data'
-          file tgpu-gulf-social-preview-green-gold-20260923.png | grep -Eqi 'PNG image data'
 
           python3 <<'PY'
           from pathlib import Path
           import re
-          p=Path('index.html'); s=p.read_text(encoding='utf-8')
-          banner='<section class="approved-hero-banner" aria-label="TGPU Gulf approved green and gold banner"><div class="banner-wrap"><img src="tgpu-gulf-hero-approved-green-gold-20260923.webp?v=20260923-visible3" width="1800" height="600" alt="TGPU Gulf — Bridging Malaysia and the GCC" fetchpriority="high" decoding="async"></div></section>'
-          style='<style id="approved-banner-clean">.approved-hero-banner{display:block!important;padding:14px 0 18px!important;background:#fff!important}.approved-hero-banner .banner-wrap{width:min(1600px,calc(100% - 24px))!important;margin:auto!important}.approved-hero-banner img{display:block!important;width:100%!important;height:auto!important;aspect-ratio:3/1!important;object-fit:cover!important;border-radius:20px!important;box-shadow:0 14px 34px rgba(8,41,30,.14)!important}.hero-brand-logo{display:none!important}@media(max-width:640px){.approved-hero-banner{padding:8px 0 12px!important}.approved-hero-banner .banner-wrap{width:calc(100% - 12px)!important}.approved-hero-banner img{border-radius:14px!important}}</style>'
-          social='https://tgpugulf.com/tgpu-gulf-social-preview-green-gold-20260923.png?v=20260923-social3'
-          favicon='tgpu-gulf-favicon-approved-green-gold-20260923.png?v=20260923-favicon3'
-          s=s.replace('tgpu-gulf-approved.png','tgpu-gulf-logo-approved-green-gold-20260923.webp')
-          s=re.sub(r'<section class="approved-hero-banner".*?</section>','',s,flags=re.S)
-          s=s.replace('<main id="top">','<main id="top">\n'+banner,1)
-          if 'approved-banner-clean' not in s: s=s.replace('</head>',style+'</head>',1)
-          s=re.sub(r'(<meta property="og:image" content=")[^"]+("[^>]*>)',r'\1'+social+r'\2',s,count=1)
-          s=re.sub(r'(<meta name="twitter:image" content=")[^"]+("[^>]*>)',r'\1'+social+r'\2',s,count=1)
-          s=re.sub(r'(<meta property="og:image:width" content=")[^"]+("[^>]*>)',r'\g<1>1200\2',s,count=1)
-          s=re.sub(r'(<meta property="og:image:height" content=")[^"]+("[^>]*>)',r'\g<1>630\2',s,count=1)
-          s=re.sub(r'(<link rel="icon" type="image/png" href=")[^"]+("[^>]*>)',r'\1'+favicon+r'\2',s,count=1)
-          p.write_text(s,encoding='utf-8')
+
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          approved = 'https://tgpugulf.com/tgpu-gulf-approved.png'
+
+          # Keep the approved green/gold logo already used in the visible header/hero.
+          s = re.sub(r'(<meta property="og:image" content=")[^"]+("[^>]*>)', r'\1' + approved + r'\2', s, count=1)
+          s = re.sub(r'(<meta name="twitter:image" content=")[^"]+("[^>]*>)', r'\1' + approved + r'\2', s, count=1)
+          s = re.sub(r'(<link rel="icon" type="image/png" href=")[^"]+("[^>]*>)', r'\1tgpu-gulf-approved.png\2', s, count=1)
+          p.write_text(s, encoding='utf-8')
           PY
 
-          grep -q 'tgpu-gulf-logo-approved-green-gold-20260923.webp' index.html
-          grep -q 'tgpu-gulf-hero-approved-green-gold-20260923.webp' index.html
-          grep -q 'tgpu-gulf-social-preview-green-gold-20260923.png' index.html
-          grep -q 'tgpu-gulf-favicon-approved-green-gold-20260923.png' index.html
-          grep -q '<section class="approved-hero-banner"' index.html
+          grep -q 'tgpu-gulf-approved.png' index.html
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
