@@ -6,6 +6,8 @@ on:
       - main
   workflow_dispatch:
 
+# Deployment refresh: 2026-09-26
+
 permissions:
   contents: read
   pages: write
